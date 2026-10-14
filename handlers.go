@@ -9,6 +9,50 @@ import (
 	"github.com/google/uuid"
 )
 
+func handleFollowing(s *state, cmd command) error {
+	following, err := s.db.GetFeedFollowsForUser(context.Background(), s.cfg.CurrentUserName)
+	if err != nil {
+		return err
+	}
+ 
+	fmt.Printf("%s following:\n", s.cfg.CurrentUserName)
+	for _, follow := range following {
+		fmt.Printf(" - %s\n", follow.FeedName)
+
+	}
+	return nil
+}
+
+func handleFollow(s *state, cmd command) error {
+	if len(cmd.arguments) != 1 {
+		return fmt.Errorf("Incorrect number of arguments")
+	}
+	url := cmd.arguments[0]
+	user, err := s.db.GetUser(context.Background(), s.cfg.CurrentUserName)
+	if err != nil {
+		return err
+	}
+	feed, err := s.db.GetFeedByUrl(context.Background(), url)
+	if err != nil {
+		return err
+	}
+
+	follow, err := s.db.CreateFeedFollow(context.Background(), database.CreateFeedFollowParams{
+		ID: uuid.New(),
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+		UserID: user.ID,
+		FeedID: feed.ID,
+	})
+
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Current User: %s\nFeed Name: %s\n", follow.UserName, follow.FeedName)
+
+	return nil
+}
+
 func handlerLogin(s *state, cmd command) error {
 	if len(cmd.arguments) == 0 {
 		return fmt.Errorf("Username must be provided")
@@ -110,6 +154,10 @@ func handleNewFeed(s *state, cmd command) error {
 		return err
 	}
 
+	cmd.arguments = cmd.arguments[1:]
+	if err = handleFollow(s, cmd); err != nil {
+		return err
+	}
 	printFeed(feed, user)
 	fmt.Println()
 	fmt.Println("=====================================")
