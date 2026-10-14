@@ -36,6 +36,12 @@ func main() {
 
 	cmds.register("login", handlerLogin)
 	cmds.register("register", handleRegister)
+	cmds.register("reset", handleReset)
+	cmds.register("users", handleUsers)
+	cmds.register("agg", handleAgg)
+	cmds.register("addfeed", handleNewFeed)
+	cmds.register("feeds", handleListFeeds)
+
 	if len(os.Args) < 2 {
 		log.Fatalf("No arguments provided")
 		return
