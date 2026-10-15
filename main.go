@@ -39,10 +39,11 @@ func main() {
 	cmds.register("reset", handleReset)
 	cmds.register("users", handleUsers)
 	cmds.register("agg", handleAgg)
-	cmds.register("addfeed", handleNewFeed)
+	cmds.register("addfeed", middlewareLoggedIn(handleNewFeed))
 	cmds.register("feeds", handleListFeeds)
-	cmds.register("follow", handleFollow)
+	cmds.register("follow", middlewareLoggedIn(handleFollow))
 	cmds.register("following", handleFollowing)
+	cmds.register("unfollow", middlewareLoggedIn(handleUnfollow))
 
 	if len(os.Args) < 2 {
 		log.Fatalf("No arguments provided")
@@ -54,8 +55,4 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error: %v", err)
 	}
-
-
-	fmt.Printf("Read config again: %+v\n", cfg)
-
 }

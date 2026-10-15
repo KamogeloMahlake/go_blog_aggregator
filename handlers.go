@@ -9,12 +9,33 @@ import (
 	"github.com/google/uuid"
 )
 
+func handleUnfollow(s *state, cmd command, user database.User) error {
+	if len(cmd.arguments) != 1 {
+		return fmt.Errorf("Incorrect number of arguments")
+	}
+
+	err := s.db.DeleteFeedFollow(context.Background(), database.DeleteFeedFollowParams{
+		UserID: user.ID,
+		Url: cmd.arguments[0],
+	})
+	if err != nil {
+		return nil
+	}
+
+	fmt.Printf("Unfollowed %s\n", cmd.arguments[0])
+	return nil
+}
+
 func handleFollowing(s *state, cmd command) error {
 	following, err := s.db.GetFeedFollowsForUser(context.Background(), s.cfg.CurrentUserName)
 	if err != nil {
 		return err
 	}
  
+	if len(following) == 0 {
+		fmt.Printf("No following\n")
+		return nil
+	}
 	fmt.Printf("%s following:\n", s.cfg.CurrentUserName)
 	for _, follow := range following {
 		fmt.Printf(" - %s\n", follow.FeedName)
@@ -23,15 +44,11 @@ func handleFollowing(s *state, cmd command) error {
 	return nil
 }
 
-func handleFollow(s *state, cmd command) error {
+func handleFollow(s *state, cmd command, user database.User) error {
 	if len(cmd.arguments) != 1 {
 		return fmt.Errorf("Incorrect number of arguments")
 	}
 	url := cmd.arguments[0]
-	user, err := s.db.GetUser(context.Background(), s.cfg.CurrentUserName)
-	if err != nil {
-		return err
-	}
 	feed, err := s.db.GetFeedByUrl(context.Background(), url)
 	if err != nil {
 		return err
@@ -132,14 +149,9 @@ func handleAgg(s *state, cmd command) error {
 	return nil
 }
 
-func handleNewFeed(s *state, cmd command) error {
+func handleNewFeed(s *state, cmd command, user database.User) error {
 	if len(cmd.arguments) != 2 {
 		return fmt.Errorf("Incorrect number of arguments")
-	}
-
-	user, err := s.db.GetUser(context.Background(), s.cfg.CurrentUserName)
-	if err != nil {
-		return err
 	}
 
 	feed, err := s.db.CreateFeed(context.Background(), database.CreateFeedParams{
@@ -155,7 +167,7 @@ func handleNewFeed(s *state, cmd command) error {
 	}
 
 	cmd.arguments = cmd.arguments[1:]
-	if err = handleFollow(s, cmd); err != nil {
+	if err = handleFollow(s, cmd, user); err != nil {
 		return err
 	}
 	printFeed(feed, user)
