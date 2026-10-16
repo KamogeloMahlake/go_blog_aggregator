@@ -1,1 +1,2 @@
 go_blog_aggregator
+./sql/schema/migration.sh

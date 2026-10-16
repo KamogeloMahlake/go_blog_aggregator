@@ -44,6 +44,7 @@ func main() {
 	cmds.register("follow", middlewareLoggedIn(handleFollow))
 	cmds.register("following", handleFollowing)
 	cmds.register("unfollow", middlewareLoggedIn(handleUnfollow))
+	cmds.register("browse", middlewareLoggedIn(handleBrowser))
 
 	if len(os.Args) < 2 {
 		log.Fatalf("No arguments provided")

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/KamogeloMahlake/go_blog_aggregator/internal/database"
@@ -140,15 +141,6 @@ func handleUsers(s *state, cmd command) error {
 	return nil
 }
 
-func handleAgg(s *state, cmd command) error {
-	rss, err := fetchFeed(context.Background(), "https://www.wagslane.dev/index.xml")
-	if err != nil {
-		return err
-	}
-	fmt.Printf("Feed: %+v",rss)
-	return nil
-}
-
 func handleNewFeed(s *state, cmd command, user database.User) error {
 	if len(cmd.arguments) != 2 {
 		return fmt.Errorf("Incorrect number of arguments")
@@ -210,3 +202,27 @@ func printFeed(feed database.Feed, user database.User) {
 	fmt.Printf("* User:          %s\n", user.Name)
 }
 
+func handleBrowser(s *state, cmd command, user database.User) error{
+	limit := 2
+	if len(cmd.arguments) >= 1{
+		lim, err := strconv.Atoi(cmd.arguments[0])
+		if err != nil{
+			return fmt.Errorf("Limit argument is not an integer")
+		}
+		limit = int(lim)
+	}
+
+
+	posts, err := s.db.GetPostsForUser(context.Background(), database.GetPostsForUserParams{UserID: user.ID, Limit: int32(limit)})
+	if err != nil{
+		return fmt.Errorf("Error looking up posts: %w", err)
+	}
+	for _, post := range posts{
+		fmt.Println("-------------------------------------")
+		fmt.Printf("%s :: %s\n", post.Title, post.Url)
+		if post.Description.Valid{
+			fmt.Println(post.Description.String)
+		}
+	}
+	return nil
+}
